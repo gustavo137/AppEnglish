@@ -48,5 +48,55 @@
     "past_participle": "thrown",
     "gerund": "throwing",
     "image": "/images/verbs/to_throw.webp"
+  },
+  {
+    "id": "to_rise",
+    "spanish": "suibir",
+    "pronunciation": "",
+    "infinitive": "rise",
+    "past": "rose",
+    "past_participle": "risen",
+    "gerund": "rising",
+    "image": "/images/verbs/to_rise.webp"
+  },
+  {
+    "id": "to_drink",
+    "spanish": "beber",
+    "pronunciation": "",
+    "infinitive": "drink",
+    "past": "drank",
+    "past_participle": "drunk",
+    "gerund": "drinking",
+    "image": "/images/verbs/to_drink.webp"
+  },
+  {
+    "id": "to_fight",
+    "spanish": "pelear",
+    "pronunciation": "",
+    "infinitive": "fight",
+    "past": "fought",
+    "past_participle": "fought",
+    "gerund": "fihting",
+    "image": "/images/verbs/to_fight.webp"
+  },
+  {
+    "id": "to_feed",
+    "spanish": "alimentar",
+    "pronunciation": "",
+    "infinitive": "feed",
+    "past": "fed",
+    "past_participle": "fed",
+    "gerund": "feeding",
+    "image": "/images/verbs/to_feed.webp"
+  },
+  {
+    "id": "to_do",
+    "spanish": "hacer",
+    "pronunciation": "",
+    "infinitive": "do",
+    "past": "did",
+    "past_participle": "done",
+    "gerund": "doing",
+    "image": "/images/verbs/to_do.webp"
   }
 ]
