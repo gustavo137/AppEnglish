@@ -69,3 +69,4 @@ workbox-*.js
 .env
 .env.*
 
+node_modules
