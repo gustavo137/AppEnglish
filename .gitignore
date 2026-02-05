@@ -1,0 +1,71 @@
+# ===============================
+# Node / Vite / React
+# ===============================
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Vite cache
+.vite/
+
+# ===============================
+# TypeScript
+# ===============================
+*.tsbuildinfo
+
+# ===============================
+# Logs
+# ===============================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===============================
+# OS / Editor
+# ===============================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===============================
+# Python
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# ===============================
+# Data pipeline (raw inputs)
+# ===============================
+data/images_raw/
+data/*.csv
+
+# ===============================
+# Optional: generated artifacts
+# ===============================
+# If you ever want to regenerate images/JSON from CSV
+# keep these ignored; otherwise comment them out.
+# public/images/verbs/
+# public/verbs.json
+
+# ===============================
+# Service worker / PWA
+# ===============================
+sw.js
+workbox-*.js
+
+# ===============================
+# Env vars
+# ===============================
+.env
+.env.*
+

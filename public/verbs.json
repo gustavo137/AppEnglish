@@ -1,0 +1,52 @@
+[
+  {
+    "id": "to_burn",
+    "spanish": "incendiar",
+    "pronunciation": "",
+    "infinitive": "burn",
+    "past": "burned",
+    "past_participle": "burned",
+    "gerund": "burning",
+    "image": "/images/verbs/to_burn.webp"
+  },
+  {
+    "id": "to_swing",
+    "spanish": "balancear",
+    "pronunciation": "",
+    "infinitive": "swing",
+    "past": "swung",
+    "past_participle": "swung",
+    "gerund": "swinging",
+    "image": "/images/verbs/to_swing.webp"
+  },
+  {
+    "id": "to_leap",
+    "spanish": "saltar",
+    "pronunciation": "",
+    "infinitive": "leap",
+    "past": "leaped",
+    "past_participle": "leapt",
+    "gerund": "leaping",
+    "image": "/images/verbs/to_leap.webp"
+  },
+  {
+    "id": "to_get",
+    "spanish": "obtener",
+    "pronunciation": "",
+    "infinitive": "get",
+    "past": "got",
+    "past_participle": "gotten",
+    "gerund": "getting",
+    "image": "/images/verbs/to_get.webp"
+  },
+  {
+    "id": "to_throw",
+    "spanish": "lanzar",
+    "pronunciation": "",
+    "infinitive": "throw",
+    "past": "threw",
+    "past_participle": "thrown",
+    "gerund": "throwing",
+    "image": "/images/verbs/to_throw.webp"
+  }
+]
