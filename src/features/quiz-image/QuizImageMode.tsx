@@ -11,8 +11,86 @@ type Round = {
   options: VerbItem[];
 };
 
-function buildRound(verbs: VerbItem[], optionsCount: number): Round {
-  const target = verbs[Math.floor(Math.random() * verbs.length)];
+type Stats = {
+  total: number;
+  correct: number;
+  hitCount: Record<string, number>;
+  missCount: Record<string, number>;
+  lastUpdated: number;
+};
+
+const STATS_KEY = "appenglish.quizImage.stats.v1";
+
+function defaultStats(): Stats {
+  return {
+    total: 0,
+    correct: 0,
+    hitCount: {},
+    missCount: {},
+    lastUpdated: Date.now(),
+  };
+}
+
+function loadStats(): Stats {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (!raw) return defaultStats();
+    const parsed = JSON.parse(raw) as Partial<Stats>;
+    return {
+      total: typeof parsed.total === "number" ? parsed.total : 0,
+      correct: typeof parsed.correct === "number" ? parsed.correct : 0,
+      hitCount: parsed.hitCount && typeof parsed.hitCount === "object" ? parsed.hitCount : {},
+      missCount: parsed.missCount && typeof parsed.missCount === "object" ? parsed.missCount : {},
+      lastUpdated: typeof parsed.lastUpdated === "number" ? parsed.lastUpdated : Date.now(),
+    };
+  } catch {
+    return defaultStats();
+  }
+}
+
+function saveStats(s: Stats) {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(s));
+  } catch {
+    // ignore (private mode / quota)
+  }
+}
+
+function clampMin1(x: number) {
+  return x < 1 ? 1 : x;
+}
+
+function pickWeighted(verbs: VerbItem[], hit: Record<string, number>, miss: Record<string, number>, avoidId?: string) {
+  // Weight heuristic:
+  // - base weight 1
+  // - mistakes increase probability strongly
+  // - repeated hits reduce it mildly
+  const weights = verbs.map((v) => {
+    const h = hit[v.id] ?? 0;
+    const m = miss[v.id] ?? 0;
+    let w = 1 + 3 * m - 0.5 * h;
+    if (avoidId && v.id === avoidId) w *= 0.15; // avoid immediate repeats without forbidding them
+    return clampMin1(w);
+  });
+
+  const sum = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * sum;
+
+  for (let i = 0; i < verbs.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return verbs[i];
+  }
+  return verbs[verbs.length - 1];
+}
+
+function buildRoundWeighted(
+  verbs: VerbItem[],
+  optionsCount: number,
+  hit: Record<string, number>,
+  miss: Record<string, number>,
+  avoidId?: string
+): Round {
+  const target = pickWeighted(verbs, hit, miss, avoidId);
   const distractors = pickN(
     verbs.filter((v) => v.id !== target.id),
     Math.max(1, optionsCount - 1)
@@ -26,22 +104,74 @@ export default function QuizImageMode({ optionsCount }: Props) {
   const [round, setRound] = React.useState<Round | null>(null);
   const [pickedId, setPickedId] = React.useState<string | null>(null);
 
+  // persistent stats
+  const [stats, setStats] = React.useState<Stats>(() => {
+    // localStorage only exists in browser
+    if (typeof window === "undefined") return defaultStats();
+    return loadStats();
+  });
+
+  // keep localStorage synced
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    saveStats(stats);
+  }, [stats]);
+
   React.useEffect(() => {
     loadVerbs()
       .then((v) => {
         setVerbs(v);
-        setRound(buildRound(v, optionsCount));
+        // first round: no avoidId
+        setRound(buildRoundWeighted(v, optionsCount, stats.hitCount, stats.missCount));
       })
       .catch((e) => {
         console.error(e);
         setVerbs([]);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [optionsCount]);
 
   function next() {
     if (!verbs || verbs.length === 0) return;
+    const avoidId = round?.target?.id;
     setPickedId(null);
-    setRound(buildRound(verbs, optionsCount));
+    setRound(buildRoundWeighted(verbs, optionsCount, stats.hitCount, stats.missCount, avoidId));
+  }
+
+  function resetStats() {
+    const s = defaultStats();
+    setStats(s);
+    try {
+      localStorage.removeItem(STATS_KEY);
+    } catch {
+      // ignore
+    }
+  }
+
+  function onPick(id: string) {
+    if (!round || pickedId) return; // already answered
+    setPickedId(id);
+
+    const targetId = round.target.id;
+    const isCorrect = id === targetId;
+
+    setStats((prev) => {
+      const nextStats: Stats = {
+        ...prev,
+        total: prev.total + 1,
+        correct: prev.correct + (isCorrect ? 1 : 0),
+        hitCount: { ...prev.hitCount },
+        missCount: { ...prev.missCount },
+        lastUpdated: Date.now(),
+      };
+
+      if (isCorrect) {
+        nextStats.hitCount[targetId] = (nextStats.hitCount[targetId] ?? 0) + 1;
+      } else {
+        nextStats.missCount[targetId] = (nextStats.missCount[targetId] ?? 0) + 1;
+      }
+      return nextStats;
+    });
   }
 
   if (verbs === null || round === null) {
@@ -60,20 +190,39 @@ export default function QuizImageMode({ optionsCount }: Props) {
   }
 
   const { target, options } = round;
-  const correct = pickedId === target.id;
+  const isAnswered = !!pickedId;
+  const isCorrect = pickedId === target.id;
+  const accuracy = stats.total > 0 ? Math.round((100 * stats.correct) / stats.total) : 0;
 
-  // <div className="row" style={{ alignItems: "stretch" }}> ==> <div className="quizLayout"> 
+  const hardest = Object.entries(stats.missCount)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
   return (
     <div className="card">
-      <div className="quizLayout">
+      {/* top bar */}
+      <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <span className="badge">Mode: Image → Verb</span>
+          <span className="badge">
+            Score: {stats.correct}/{stats.total} ({accuracy}%)
+          </span>
+        </div>
+
+        <button className="btn" onClick={resetStats} style={{ width: "auto", padding: "10px 12px" }}>
+          Reset stats
+        </button>
+      </div>
+
+      <div className="quizLayout" style={{ marginTop: 12 }}>
         <div style={{ flex: "1 1 380px", minWidth: 280 }}>
           <div className="imgWrap">
             <img
-              src={normalizeImageUrl(target.image)}
+              src={normalizeImageUrl((target as any).image_local ?? target.image)}
               alt={target.infinitive}
               loading="lazy"
               onError={(e) => {
-                // fallback if remote URL fails
                 (e.currentTarget as HTMLImageElement).src =
                   "data:image/svg+xml;charset=utf-8," +
                   encodeURIComponent(
@@ -93,13 +242,26 @@ export default function QuizImageMode({ optionsCount }: Props) {
             <span className="badge">Target: infinitive</span>
           </div>
 
-          {pickedId && (
+          {isAnswered && (
             <div style={{ marginTop: 12, opacity: 0.9 }}>
-              {correct ? (
+              {isCorrect ? (
                 <span className="badge">✅ Correct</span>
               ) : (
                 <span className="badge">❌ Incorrect — correct is: {target.infinitive}</span>
               )}
+            </div>
+          )}
+
+          {hardest.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ marginBottom: 8, opacity: 0.9 }}>Hardest (most missed)</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {hardest.map(([id, n]) => (
+                  <span key={id} className="badge">
+                    {id.replace(/^to_/, "")}: {n}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -114,23 +276,19 @@ export default function QuizImageMode({ optionsCount }: Props) {
           <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Choose the verb</h2>
           <div style={{ display: "grid", gap: 10 }}>
             {options.map((v) => {
-              const isPicked = pickedId === v.id;
-              const isCorrect = v.id === target.id;
+              const picked = pickedId === v.id;
+              const correctOption = v.id === target.id;
+
               const className =
                 "btn " +
-                (pickedId
-                  ? isCorrect
-                    ? "correct"
-                    : isPicked
-                      ? "wrong"
-                      : ""
-                  : "");
+                (isAnswered ? (correctOption ? "correct" : picked ? "wrong" : "") : "");
+
               return (
                 <button
                   key={v.id}
                   className={className}
-                  onClick={() => setPickedId(v.id)}
-                  disabled={!!pickedId}
+                  onClick={() => onPick(v.id)}
+                  disabled={isAnswered}
                 >
                   <div style={{ fontSize: 16, fontWeight: 600 }}>{v.infinitive}</div>
                   <div style={{ opacity: 0.8, fontSize: 12 }}>
@@ -139,6 +297,10 @@ export default function QuizImageMode({ optionsCount }: Props) {
                 </button>
               );
             })}
+          </div>
+
+          <div style={{ marginTop: 12, opacity: 0.8, fontSize: 12 }}>
+            Tip: mistakes are weighted higher, so you’ll see missed verbs more often.
           </div>
         </div>
       </div>
