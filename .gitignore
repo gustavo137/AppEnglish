@@ -48,7 +48,7 @@ env/
 # ===============================
 data/images_raw/
 data/*.csv
-
+data/*.xlsx
 # ===============================
 # Optional: generated artifacts
 # ===============================
