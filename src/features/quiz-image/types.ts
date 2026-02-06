@@ -7,4 +7,5 @@ export type VerbItem = {
   past_participle: string;
   gerund: string;
   image: string;
+  image_local?: string;
 };

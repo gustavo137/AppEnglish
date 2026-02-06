@@ -85,7 +85,7 @@ a {
   aspect-ratio: 4 / 3;
   /* Compus: 1 / 1 , For cellphones use: 4 / 3*/
   /* fix size */
-  margin: 0;
+  margin: 0 auto;
   /*0 auto*/
   /* centered */
 }
@@ -105,9 +105,34 @@ a {
   align-items: start;
 }
 
-/* In small screems, put togetter */
+/* Desktop placement */
+.quizImageBlock {
+  grid-column: 1;
+}
+
+.quizOptions {
+  grid-column: 2;
+}
+
+.quizFeedback {
+  grid-column: 1;
+}
+
+/* Mobile: stack in the exact order */
 @media (max-width: 900px) {
   .quizLayout {
     grid-template-columns: 1fr;
+  }
+
+  .quizImageBlock {
+    grid-column: 1;
+  }
+
+  .quizOptions {
+    grid-column: 1;
+  }
+
+  .quizFeedback {
+    grid-column: 1;
   }
 }

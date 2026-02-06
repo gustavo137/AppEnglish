@@ -216,10 +216,11 @@ export default function QuizImageMode({ optionsCount }: Props) {
       </div>
 
       <div className="quizLayout" style={{ marginTop: 12 }}>
-        <div style={{ flex: "1 1 380px", minWidth: 280 }}>
+        {/* IMAGE + BADGES */}
+        <div className="quizImageBlock">
           <div className="imgWrap">
             <img
-              src={normalizeImageUrl((target as any).image_local ?? target.image)}
+              src={normalizeImageUrl(target.image_local ?? target.image)}
               alt={target.infinitive}
               loading="lazy"
               onError={(e) => {
@@ -227,11 +228,12 @@ export default function QuizImageMode({ optionsCount }: Props) {
                   "data:image/svg+xml;charset=utf-8," +
                   encodeURIComponent(
                     `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'>
-                      <rect width='100%' height='100%' fill='#0b1220'/>
-                      <text x='50%' y='50%' fill='#e5e7eb' font-size='48' font-family='system-ui' text-anchor='middle'>
-                        image unavailable
-                      </text>
-                    </svg>`
+                <rect width='100%' height='100%' fill='#0b1220'/>
+                <text x='50%' y='50%' fill='#e5e7eb' font-size='48'
+                      font-family='system-ui' text-anchor='middle'>
+                  image unavailable
+                </text>
+              </svg>`
                   );
               }}
             />
@@ -241,10 +243,43 @@ export default function QuizImageMode({ optionsCount }: Props) {
             <span className="badge">ES: {target.spanish}</span>
             <span className="badge">Target: infinitive</span>
           </div>
+        </div>
 
-          {isAnswered && (
+        {/* OPTIONS */}
+        <div className="quizOptions">
+          <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Choose the verb</h2>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {options.map((v) => {
+              const picked = pickedId === v.id;
+              const correctOption = v.id === target.id;
+
+              const className =
+                "btn " +
+                (pickedId ? (correctOption ? "correct" : picked ? "wrong" : "") : "");
+
+              return (
+                <button
+                  key={v.id}
+                  className={className}
+                  onClick={() => onPick(v.id)}
+                  disabled={!!pickedId}
+                >
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>{v.infinitive}</div>
+                  <div style={{ opacity: 0.8, fontSize: 12 }}>
+                    past: {v.past} • pp: {v.past_participle} • gerund: {v.gerund}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* FEEDBACK + STATS + NEXT */}
+        <div className="quizFeedback">
+          {pickedId && (
             <div style={{ marginTop: 12, opacity: 0.9 }}>
-              {isCorrect ? (
+              {pickedId === target.id ? (
                 <span className="badge">✅ Correct</span>
               ) : (
                 <span className="badge">❌ Incorrect — correct is: {target.infinitive}</span>
@@ -266,44 +301,15 @@ export default function QuizImageMode({ optionsCount }: Props) {
           )}
 
           <div style={{ marginTop: 12 }}>
-            <button className="btn" onClick={next}>
+            <button className="btn" onClick={next} disabled={!pickedId}>
               Next
             </button>
           </div>
         </div>
-
-        <div style={{ flex: "1 1 380px", minWidth: 280 }}>
-          <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Choose the verb</h2>
-          <div style={{ display: "grid", gap: 10 }}>
-            {options.map((v) => {
-              const picked = pickedId === v.id;
-              const correctOption = v.id === target.id;
-
-              const className =
-                "btn " +
-                (isAnswered ? (correctOption ? "correct" : picked ? "wrong" : "") : "");
-
-              return (
-                <button
-                  key={v.id}
-                  className={className}
-                  onClick={() => onPick(v.id)}
-                  disabled={isAnswered}
-                >
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>{v.infinitive}</div>
-                  <div style={{ opacity: 0.8, fontSize: 12 }}>
-                    past: {v.past} • pp: {v.past_participle} • gerund: {v.gerund}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div style={{ marginTop: 12, opacity: 0.8, fontSize: 12 }}>
-            Tip: mistakes are weighted higher, so you’ll see missed verbs more often.
-          </div>
-        </div>
       </div>
+
+
+
     </div>
   );
 }
